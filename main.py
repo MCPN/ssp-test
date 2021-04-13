@@ -27,9 +27,17 @@ def create_slice_test(string: str, repetitions: int, min_len: int, max_len: int)
     return ensure_substring_free(strings)
 
 
+def print_data(data, description: str):
+    if isinstance(data, list):
+        ln = sum(map(len, data))
+    else:
+        ln = len(data)
+    print(description, data, 'len:', ln)
+
+
 def main():
     parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers()
+    subparsers = parser.add_subparsers(dest='test_type')
 
     dna_from_given = subparsers.add_parser('from_dna')
     dna_from_given.add_argument(
@@ -154,28 +162,28 @@ def main():
     )
 
     args = parser.parse_args()
-    if args.command == 'from_dna':
+    if args.test_type == 'from_dna':
         strings = create_dna_test(args.input, args.len, args.prob)
-    elif args.command == 'from_random_dna':
+    elif args.test_type == 'from_random_dna':
         strings = create_dna_test(''.join(random.choices(args.alphabet, k=args.input_len)), args.len, args.prob)
-    elif args.command == 'from_random':
+    elif args.test_type == 'from_random':
         strings = ensure_substring_free(
             [''.join(random.choices(args.alphabet, k=args.len)) for _ in range(args.amount)]
         )
-    elif args.command == 'slice_dna':
+    elif args.test_type == 'slice_dna':
         strings = create_slice_test(args.input, args.repetitions, args.min_len, args.max_len)
-    elif args.command == 'slice_random':
+    elif args.test_type == 'slice_random':
         strings = create_slice_test(
             ''.join(random.choices(args.alphabet, k=args.input_len)), args.repetitions, args.min_len, args.max_len
         )
     else:
         raise ValueError(f'Unknown command {args.command}')
 
-    print('Instance:', strings)
-    print('GREEDY:', GreedySolver(strings).greedy())
-    print('TGREEDY:', GreedySolver(strings).t_greedy())
-    print('GHA:', HierarchicalSolver(strings).gha())
-    print('CA for trivial:', HierarchicalSolver(strings).trivial_ca())
+    print_data(strings, 'Instance')
+    print_data(GreedySolver(strings).greedy(), 'GREEDY')
+    print_data(GreedySolver(strings).t_greedy(), 'TGREEDY')
+    print_data(HierarchicalSolver(strings).gha(), 'GHA')
+    print_data(HierarchicalSolver(strings).trivial_ca(), 'CA for trivial')
 
 
 if __name__ == '__main__':

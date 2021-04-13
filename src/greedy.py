@@ -45,6 +45,10 @@ class GreedySolver:
         """
         Solves given SSP instance by using the classical greedy algorithm
         """
+        # this case would break path-to-string because the path would be source -> string -> sink
+        if len(self._strings) == 1:
+            return self._strings[0]
+
         graph = nx.DiGraph()
         graph.add_nodes_from(range(self._n + 2))  # all the strings plus a source and a sink
         edges = list(permutations(range(self._n), 2))
@@ -75,12 +79,20 @@ class GreedySolver:
         edges.sort(key=lambda x: self._overlaps[x], reverse=True)
 
         strings = []
+        reachable = defaultdict(set)
         for edge in edges:
-            if graph.out_degree(edge[0]) != 0 or graph.in_degree(edge[1]) != 0:
+            if graph.out_degree(edge[0]) != 0 or graph.in_degree(edge[1]) != 0 or graph.has_edge(edge[1], edge[0]):
                 continue
             graph.add_edge(*edge)
-            if graph.out_degree(edge[1]) != 0:
+
+            if edge[0] in reachable[edge[1]]:  # cycle
                 cycle_string = self._path_to_string(nx.find_cycle(graph, source=edge[0]))
                 strings.append(cycle_string)
+            else:
+                prefix = nx.ancestors(graph, edge[1])
+                suffix = nx.descendants(graph, edge[0])
+                for v in prefix:
+                    for u in suffix:
+                        reachable[v].add(u)
 
         return GreedySolver(strings).greedy()

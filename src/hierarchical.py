@@ -53,8 +53,7 @@ class HierarchicalGraph:
         for node in nodes:
             success = True
             while success:  # continue iff the last iteration collapsed some edges
-                # don't make input node isolated
-                if node in input_nodes and self.graph.in_degree(node) == 1:
+                if node in input_nodes and self.graph.in_degree(node) == 1:  # don't make input node isolated
                     break
                 success = False
                 prevs = [string for string in self.graph.predecessors(node) if len(string) < len(node)]
@@ -134,3 +133,23 @@ class HierarchicalGraph:
                 if '' not in scc and scc == wcc and max(scc, key=lambda vert: (-len(vert), vert)) == node:
                     self.graph.add_edge(node[:-1], node)
                     self.graph.add_edge(node, node[1:])
+
+
+class HierarchicalSolver:
+    def __init__(self, strings: List[str]):
+        self._graph = HierarchicalGraph(strings)
+
+    def gha(self) -> str:
+        """
+        Solves given SSP instance by using the GHA algorithm
+        """
+        self._graph.construct_greedy_graph()
+        return self._graph.to_string()
+
+    def trivial_ca(self) -> str:
+        """
+        Solves given SSP instance by using the CA algorithm for the trivial solution
+        """
+        self._graph.construct_trivial_graph()
+        self._graph.double_and_collapse()
+        return self._graph.to_string()

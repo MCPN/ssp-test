@@ -1,5 +1,6 @@
 import argparse
 import random
+from multiprocessing import Pool
 from typing import List
 
 from src import GreedySolver, HierarchicalSolver
@@ -58,7 +59,7 @@ def main():
     )
     subparsers = parser.add_subparsers(dest='test_type')
 
-    dna_from_given = subparsers.add_parser('from_dna')
+    dna_from_given = subparsers.add_parser('dna')
     dna_from_given.add_argument(
         '--input',
         required=True,
@@ -77,7 +78,7 @@ def main():
         help='Probability of elimination'
     )
 
-    dna_from_random = subparsers.add_parser('from_random_dna')
+    dna_from_random = subparsers.add_parser('random_dna')
     dna_from_random.add_argument(
         '--alphabet',
         required=False,
@@ -103,7 +104,7 @@ def main():
         help='Probability of elimination'
     )
 
-    from_random = subparsers.add_parser('from_random')
+    from_random = subparsers.add_parser('random')
     from_random.add_argument(
         '--alphabet',
         required=False,
@@ -181,11 +182,11 @@ def main():
     )
 
     args = parser.parse_args()
-    if args.test_type == 'from_dna':
+    if args.test_type == 'dna':
         strings = create_dna_test(args.input, args.len, args.prob)
-    elif args.test_type == 'from_random_dna':
+    elif args.test_type == 'random_dna':
         strings = create_dna_test(''.join(random.choices(args.alphabet, k=args.input_len)), args.len, args.prob)
-    elif args.test_type == 'from_random':
+    elif args.test_type == 'random':
         strings = ensure_substring_free(
             [''.join(random.choices(args.alphabet, k=args.len)) for _ in range(args.amount)]
         )
@@ -201,9 +202,14 @@ def main():
         random.shuffle(strings)
     print_data(strings, 'Instance', args.quiet)
 
-    greedy = GreedySolver(strings).greedy()
-    t_greedy = GreedySolver(strings).t_greedy()
-    gha = HierarchicalSolver(strings).gha()
+    with Pool(processes=3) as pool:
+        async_solvers = map(pool.apply_async, [
+            GreedySolver(strings).greedy,
+            GreedySolver(strings).t_greedy,
+            HierarchicalSolver(strings).gha,
+        ])
+        greedy, t_greedy, gha = map(lambda x: getattr(x, 'get')(), async_solvers)
+
     if args.check_correctness:
         for i, solution in enumerate([greedy, t_greedy, gha]):
             for string in strings:
@@ -214,7 +220,6 @@ def main():
     print_data(greedy, 'GREEDY', args.quiet)
     print_data(t_greedy, 'TGREEDY', args.quiet)
     print_data(gha, 'GHA', args.quiet)
-    # print_data(HierarchicalSolver(strings).trivial_ca(), 'CA for trivial', args.quiet)
 
 
 if __name__ == '__main__':

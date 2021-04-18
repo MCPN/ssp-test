@@ -1,5 +1,4 @@
-from itertools import permutations
-from typing import Dict, List, Tuple
+from typing import List
 
 import networkx as nx
 
@@ -11,11 +10,7 @@ class HierarchicalGraph:
     def __init__(self, strings: List[str]):
         self.graph = nx.MultiDiGraph()
         self._strings: List[str] = strings
-        self._overlaps: Dict[Tuple[str, str], int] = {}
         self._n: int = len(strings)
-
-        for i, j in permutations(range(self._n), 2):
-            self._overlaps[(strings[i], strings[j])] = calculate_overlap(strings[i], strings[j])
 
         for string in strings:
             for i in range(len(string)):
@@ -40,8 +35,7 @@ class HierarchicalGraph:
     def double_and_collapse(self):
         """
         Doubles all the edges in given solution and applies the collapsing algorithm
-        Warning: if graph does not contain a solution,
-        the behaviour of this function is undefined
+        Warning: if graph does not contain a solution, the behaviour of this function is undefined
         """
         for edge in list(self.graph.edges()):
             self.graph.add_edge(*edge)
@@ -52,36 +46,28 @@ class HierarchicalGraph:
         input_nodes = set(self._strings)
 
         for node in nodes:
-            success = True
-            while success:  # continue iff the last iteration collapsed some edges
+            prev = node[:-1]
+            suff = node[1:]
+            prev_suff = node[1:-1]
+            while self.graph.has_edge(prev, node) and self.graph.has_edge(node, suff):
                 if node in input_nodes and self.graph.in_degree(node) == 1:  # don't make input node isolated
                     break
-                success = False
-                prevs = [string for string in self.graph.predecessors(node) if len(string) < len(node)]
-                suffs = [string for string in self.graph.successors(node) if len(string) < len(node)]
 
-                for prev in prevs:
-                    if success:
-                        break
-                    for suff in suffs:
-                        prev_suff = None
-                        self.graph.remove_edge(prev, node)
-                        self.graph.remove_edge(node, suff)
-                        if len(node) > 1:
-                            prev_suff = node[1:-1]
-                            self.graph.add_edge(prev, prev_suff)
-                            self.graph.add_edge(prev_suff, suff)
+                self.graph.remove_edge(prev, node)
+                self.graph.remove_edge(node, suff)
+                if len(node) > 1:
+                    self.graph.add_edge(prev, prev_suff)
+                    self.graph.add_edge(prev_suff, suff)
 
-                        side_components = nx.number_weakly_connected_components(self.graph) - 1
-                        if not nx.is_isolate(self.graph, '') and nx.number_of_isolates(self.graph) == side_components:
-                            success = True
-                            break
-                        else:  # uncollapse the last pair of edges (that broke the connectivity)
-                            if len(node) > 1:
-                                self.graph.remove_edge(prev, prev_suff)
-                                self.graph.remove_edge(prev_suff, suff)
-                            self.graph.add_edge(prev, node)
-                            self.graph.add_edge(node, suff)
+                side_components = nx.number_weakly_connected_components(self.graph) - 1
+                if nx.is_isolate(self.graph, '') or nx.number_of_isolates(self.graph) != side_components:
+                    # uncollapse the last pair of edges (that broke the connectivity)
+                    if len(node) > 1:
+                        self.graph.remove_edge(prev, prev_suff)
+                        self.graph.remove_edge(prev_suff, suff)
+                    self.graph.add_edge(prev, node)
+                    self.graph.add_edge(node, suff)
+                    break
 
     def construct_trivial_graph(self):
         """
@@ -93,7 +79,7 @@ class HierarchicalGraph:
             for j in range(cur_overlap, len(cur_string)):
                 self.graph.add_edge(cur_string[:j], cur_string[:j + 1])
 
-            cur_overlap = self._overlaps[cur_string, self._strings[i + 1]] if i + 1 != len(self._strings) else 0
+            cur_overlap = calculate_overlap(cur_string, self._strings[i + 1]) if i + 1 != len(self._strings) else 0
             for j in range(len(cur_string), cur_overlap, -1):
                 self.graph.add_edge(cur_string[-j:], '' if j == 1 else cur_string[-j + 1:])
 
@@ -101,7 +87,6 @@ class HierarchicalGraph:
         """
         Constructs a greedy solution using Greedy Hierarchical Algorithm (GHA)
         """
-
         nodes = list(self.graph.nodes())
         nodes.sort(key=lambda x: (-len(x), x))
         dsu = DSU(nodes)
@@ -132,8 +117,6 @@ class HierarchicalGraph:
                     self.graph.add_edge(pref, node)
                 dsu.union(pref, node)
             else:
-                # scc = [elem for elem in nx.strongly_connected_components(self.graph) if node in elem][0]
-                # wcc = [elem for elem in nx.weakly_connected_components(self.graph) if node in elem][0]
                 # the last chance to connect eps to node
                 node_par = dsu.find_parent(node)
                 if dsu.find_parent('') != node_par and dsu.last[node_par] == node:

@@ -27,16 +27,30 @@ def create_slice_test(string: str, repetitions: int, min_len: int, max_len: int)
     return ensure_substring_free(strings)
 
 
-def print_data(data, description: str):
+def print_data(data, description: str, quiet: bool):
     if isinstance(data, list):
         ln = sum(map(len, data))
     else:
         ln = len(data)
-    print(description, data, 'len:', ln)
+
+    if quiet:
+        print(description, ln)
+    else:
+        print(description, data, 'len:', ln)
 
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--check-correctness',
+        action='store_true',
+        help='check the correctness of solution'
+    )
+    parser.add_argument(
+        '--quiet',
+        action='store_true',
+        help='print only lengths'
+    )
     subparsers = parser.add_subparsers(dest='test_type')
 
     dna_from_given = subparsers.add_parser('from_dna')
@@ -178,12 +192,22 @@ def main():
         )
     else:
         raise ValueError(f'Unknown command {args.command}')
+    print_data(strings, 'Instance', args.quiet)
 
-    print_data(strings, 'Instance')
-    print_data(GreedySolver(strings).greedy(), 'GREEDY')
-    print_data(GreedySolver(strings).t_greedy(), 'TGREEDY')
-    print_data(HierarchicalSolver(strings).gha(), 'GHA')
-    print_data(HierarchicalSolver(strings).trivial_ca(), 'CA for trivial')
+    greedy = GreedySolver(strings).greedy()
+    t_greedy = GreedySolver(strings).t_greedy()
+    gha = HierarchicalSolver(strings).gha()
+    if args.check_correctness:
+        for i, solution in enumerate([greedy, t_greedy, gha]):
+            for string in strings:
+                if string not in solution:
+                    raise Exception(f'Solver #{i} produced incorrect solution: {string} in not in {solution}')
+        print('Solutions are valid!')
+
+    print_data(greedy, 'GREEDY', args.quiet)
+    print_data(t_greedy, 'TGREEDY', args.quiet)
+    print_data(gha, 'GHA', args.quiet)
+    # print_data(HierarchicalSolver(strings).trivial_ca(), 'CA for trivial', args.quiet)
 
 
 if __name__ == '__main__':

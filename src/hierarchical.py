@@ -3,6 +3,7 @@ from typing import Dict, List, Tuple
 
 import networkx as nx
 
+from .dsu import DSU
 from .overlap import calculate_overlap
 
 
@@ -101,13 +102,16 @@ class HierarchicalGraph:
         Constructs a greedy solution using Greedy Hierarchical Algorithm (GHA)
         """
 
+        nodes = list(self.graph.nodes())
+        nodes.sort(key=len, reverse=True)
+        dsu = DSU(nodes)
+        nodes.pop()  # remove empty string
+
         for string in self._strings:
             self.graph.add_edge(string[:-1], string)
             self.graph.add_edge(string, string[1:])
-
-        nodes = list(self.graph.nodes())
-        nodes.sort(key=len, reverse=True)
-        nodes.pop()  # remove empty string
+            dsu.union(string[:-1], string)
+            dsu.union(string, string[1:])
 
         for node in nodes:
             if nx.is_isolate(self.graph, node):
@@ -121,18 +125,22 @@ class HierarchicalGraph:
                 suff = node[1:]
                 for _ in range(indegree - outdegree):
                     self.graph.add_edge(node, suff)
+                dsu.union(node, suff)
             elif indegree < outdegree:
                 pref = node[:-1]
                 for _ in range(outdegree - indegree):
                     self.graph.add_edge(pref, node)
+                dsu.union(pref, node)
             else:
-                scc = [elem for elem in nx.strongly_connected_components(self.graph) if node in elem][0]
-                wcc = [elem for elem in nx.weakly_connected_components(self.graph) if node in elem][0]
-
+                # scc = [elem for elem in nx.strongly_connected_components(self.graph) if node in elem][0]
+                # wcc = [elem for elem in nx.weakly_connected_components(self.graph) if node in elem][0]
                 # the last chance to connect eps to node
-                if '' not in scc and scc == wcc and max(scc, key=lambda vert: (-len(vert), vert)) == node:
+                node_par = dsu.find_parent(node)
+                if dsu.find_parent('') != node_par and dsu.last[node_par] == node:
                     self.graph.add_edge(node[:-1], node)
                     self.graph.add_edge(node, node[1:])
+                    dsu.union(node[:-1], node)
+                    dsu.union(node, node[1:])
 
 
 class HierarchicalSolver:

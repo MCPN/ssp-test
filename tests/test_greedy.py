@@ -108,6 +108,33 @@ t_greedy_data = [
         ],
         3,
     ),
+    (
+        [
+            'CGGGG',
+            'GGGGT',
+            'GCAAC',
+            'CTGCT',
+            'CTCCG',
+            'TTTAG',
+            'GGGGG',
+            'AGACG',
+            'CGGGC',
+        ],
+        30,
+    ),
+    (
+        [
+            'AGTTT',
+            'TTTCC',
+            'TTGTC',
+            'GGCAG',
+            'CATAT',
+            'CGGCA',
+            'GGCAC',
+            'GGGCA'
+        ],
+        27,
+    ),
 ]
 
 

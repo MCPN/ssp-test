@@ -81,7 +81,7 @@ class GreedySolver:
         strings = []
         reachable = defaultdict(set)
         for edge in edges:
-            if graph.out_degree(edge[0]) != 0 or graph.in_degree(edge[1]) != 0 or graph.has_edge(edge[1], edge[0]):
+            if graph.out_degree(edge[0]) != 0 or graph.in_degree(edge[1]) != 0:
                 continue
             graph.add_edge(*edge)
 
@@ -95,4 +95,6 @@ class GreedySolver:
                     for u in suffix:
                         reachable[v].add(u)
 
+        # unlike in GREEDY, some nodes might left isolated
+        strings.extend(map(lambda x: self._strings[x], nx.isolates(graph)))
         return GreedySolver(strings).greedy()

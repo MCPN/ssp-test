@@ -47,7 +47,7 @@ class HierarchicalGraph:
             self.graph.add_edge(*edge)
 
         nodes = list(self.graph.nodes())
-        nodes.sort(key=len, reverse=True)
+        nodes.sort(key=lambda x: (-len(x), x))
         nodes.pop()  # remove empty string
         input_nodes = set(self._strings)
 
@@ -103,7 +103,7 @@ class HierarchicalGraph:
         """
 
         nodes = list(self.graph.nodes())
-        nodes.sort(key=len, reverse=True)
+        nodes.sort(key=lambda x: (-len(x), x))
         dsu = DSU(nodes)
         nodes.pop()  # remove empty string
 

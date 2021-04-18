@@ -47,6 +47,11 @@ def main():
         help='check the correctness of solution'
     )
     parser.add_argument(
+        '--shuffle',
+        action='store_true',
+        help='shuffle input sequence'
+    )
+    parser.add_argument(
         '--quiet',
         action='store_true',
         help='print only lengths'
@@ -192,6 +197,8 @@ def main():
         )
     else:
         raise ValueError(f'Unknown command {args.command}')
+    if args.shuffle:
+        random.shuffle(strings)
     print_data(strings, 'Instance', args.quiet)
 
     greedy = GreedySolver(strings).greedy()

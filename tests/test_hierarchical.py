@@ -66,7 +66,17 @@ greedy_data = [
             'fabc',
         ],
         9,
-    )
+    ),
+    (
+        [
+            'GTCCC',
+            'TGCCA',
+            'CCCGA',
+            'ATGCC',
+            'CCGAA',
+        ],
+        13,
+    ),
 ]
 
 
@@ -79,6 +89,33 @@ def test_greedy_solution(strings, expected):
 
     for string in strings:
         assert string in result
+
+
+deterministic_data = [
+    (
+        [
+            'ccaeae',
+            'eaeaea',
+            'aeaecc',
+        ],
+        'eaeaeaccaeaecc',
+    ),
+    (
+        [
+            'ccaeae',
+            'aeaecc',
+            'eaeaea',
+        ],
+        'eaeaeaccaeaecc',
+    ),
+]
+
+
+@pytest.mark.parametrize('strings,expected', deterministic_data)
+def test_gha_is_deterministic_to_order(strings, expected):
+    hg = HierarchicalGraph(strings)
+    hg.construct_greedy_graph()
+    assert hg.to_string() == expected
 
 
 collapsing_data = [

@@ -79,6 +79,22 @@ greedy_data = [
         ['abc'],
         'abc',
     ),
+    (
+        [
+            'ccaeae',
+            'eaeaea',
+            'aeaecc',
+        ],
+        'eaeaeaccaeaecc',
+    ),
+    (
+        [
+            'ccaeae',
+            'aeaecc',
+            'eaeaea',
+        ],
+        'ccaeaecceaeaea',
+    ),
 ]
 
 

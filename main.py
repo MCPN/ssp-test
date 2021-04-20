@@ -37,7 +37,7 @@ def print_data(data, description: str, quiet: bool):
     if quiet:
         print(description, ln)
     else:
-        print(description, data, 'len:', ln)
+        print(description + ':', data, 'len:', ln)
 
 
 def main():
@@ -58,6 +58,14 @@ def main():
         help='print only lengths'
     )
     subparsers = parser.add_subparsers(dest='test_type')
+
+    just_input = subparsers.add_parser('input')
+    just_input.add_argument(
+        '--input',
+        nargs='+',
+        required=True,
+        help='Input strings'
+    )
 
     dna_from_given = subparsers.add_parser('dna')
     dna_from_given.add_argument(
@@ -182,7 +190,9 @@ def main():
     )
 
     args = parser.parse_args()
-    if args.test_type == 'dna':
+    if args.test_type == 'input':
+        strings = args.input
+    elif args.test_type == 'dna':
         strings = create_dna_test(args.input, args.len, args.prob)
     elif args.test_type == 'random_dna':
         strings = create_dna_test(''.join(random.choices(args.alphabet, k=args.input_len)), args.len, args.prob)
@@ -197,7 +207,7 @@ def main():
             ''.join(random.choices(args.alphabet, k=args.input_len)), args.repetitions, args.min_len, args.max_len
         )
     else:
-        raise ValueError(f'Unknown command {args.command}')
+        raise ValueError(f'Unknown command {args.test_type}')
     if args.shuffle:
         random.shuffle(strings)
     print_data(strings, 'Instance', args.quiet)
@@ -208,18 +218,20 @@ def main():
             GreedySolver(strings).t_greedy,
             HierarchicalSolver(strings).gha,
         ])
-        greedy, t_greedy, gha = map(lambda x: getattr(x, 'get')(), async_solvers)
+        solutions = list(map(lambda x: getattr(x, 'get')(), async_solvers))
 
     if args.check_correctness:
-        for i, solution in enumerate([greedy, t_greedy, gha]):
+        for i, solution in enumerate(solutions):
             for string in strings:
                 if string not in solution:
                     raise Exception(f'Solver #{i} produced incorrect solution: {string} in not in {solution}')
-        print('Solutions are valid!')
+        if not args.quiet:
+            print('Solutions are valid!')
 
-    print_data(greedy, 'GREEDY', args.quiet)
-    print_data(t_greedy, 'TGREEDY', args.quiet)
-    print_data(gha, 'GHA', args.quiet)
+    print_data(solutions[0], 'GREEDY', args.quiet)
+    print_data(solutions[1], 'TGREEDY', args.quiet)
+    print_data(solutions[2], 'GHA', args.quiet)
+    print('Is GREEDY == GHA?', 'Yes' if solutions[0] == solutions[2] else 'No')
 
 
 if __name__ == '__main__':

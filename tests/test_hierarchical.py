@@ -134,6 +134,11 @@ collapsing_data = [
         'dedef',
         'fabc',
     ],
+    [
+        'GAA',
+        'TGG',
+        'GGA',
+    ],
 ]
 
 

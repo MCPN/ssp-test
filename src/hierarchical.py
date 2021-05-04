@@ -35,13 +35,15 @@ class HierarchicalGraph:
     def double_and_collapse(self):
         """
         Doubles all the edges in given solution and applies the collapsing algorithm
-        Warning: if graph does not contain a solution, the behaviour of this function is undefined
+        Warning #1: if graph does not contain a solution, the behaviour of this function is undefined
+        Warning #2: if Collapsing Conjecture doesn't hold, this function might produce incorrect solution
         """
         for edge in list(self.graph.edges()):
             self.graph.add_edge(*edge)
 
         nodes = list(self.graph.nodes())
         nodes.sort(key=lambda x: (-len(x), x))
+        dsu = DSU(nodes)
         nodes.pop()  # remove empty string
         input_nodes = set(self._strings)
 
@@ -49,9 +51,14 @@ class HierarchicalGraph:
             prev = node[:-1]
             suff = node[1:]
             prev_suff = node[1:-1]
+
             while self.graph.has_edge(prev, node) and self.graph.has_edge(node, suff):
-                if node in input_nodes and self.graph.in_degree(node) == 1:  # don't make input node isolated
-                    break
+                if self.graph.number_of_edges(prev, node) == 1 and self.graph.number_of_edges(node, suff) == 1:
+                    if node in input_nodes:  # don't make input node isolated
+                        break
+                    node_par = dsu.find_parent(node)
+                    if self.graph.degree(node) != 2 and dsu.last[node_par] == node:
+                        break
 
                 self.graph.remove_edge(prev, node)
                 self.graph.remove_edge(node, suff)
@@ -59,15 +66,10 @@ class HierarchicalGraph:
                     self.graph.add_edge(prev, prev_suff)
                     self.graph.add_edge(prev_suff, suff)
 
-                side_components = nx.number_weakly_connected_components(self.graph) - 1
-                if nx.is_isolate(self.graph, '') or nx.number_of_isolates(self.graph) != side_components:
-                    # uncollapse the last pair of edges (that broke the connectivity)
-                    if len(node) > 1:
-                        self.graph.remove_edge(prev, prev_suff)
-                        self.graph.remove_edge(prev_suff, suff)
-                    self.graph.add_edge(prev, node)
-                    self.graph.add_edge(node, suff)
-                    break
+            if self.graph.has_edge(prev, node):
+                dsu.union(prev, node)
+            if self.graph.has_edge(node, suff):
+                dsu.union(node, suff)
 
     def construct_trivial_graph(self):
         """
@@ -128,19 +130,19 @@ class HierarchicalGraph:
 
 class HierarchicalSolver:
     def __init__(self, strings: List[str]):
-        self._graph = HierarchicalGraph(strings)
+        self.hg = HierarchicalGraph(strings)
 
     def gha(self) -> str:
         """
         Solves given SSP instance by using the GHA algorithm
         """
-        self._graph.construct_greedy_graph()
-        return self._graph.to_string()
+        self.hg.construct_greedy_graph()
+        return self.hg.to_string()
 
     def trivial_ca(self) -> str:
         """
         Solves given SSP instance by using the CA algorithm for the trivial solution
         """
-        self._graph.construct_trivial_graph()
-        self._graph.double_and_collapse()
-        return self._graph.to_string()
+        self.hg.construct_trivial_graph()
+        self.hg.double_and_collapse()
+        return self.hg.to_string()

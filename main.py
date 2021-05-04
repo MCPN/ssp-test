@@ -3,6 +3,8 @@ import random
 from multiprocessing import Pool
 from typing import List
 
+from networkx import symmetric_difference
+
 from src import GreedySolver, HierarchicalSolver
 from utils import ensure_substring_free
 
@@ -212,11 +214,14 @@ def main():
         random.shuffle(strings)
     print_data(strings, 'Instance', args.quiet)
 
-    with Pool(processes=3) as pool:
+    hg_gha = HierarchicalSolver(strings)
+    hg_ca = HierarchicalSolver(strings)
+    with Pool(processes=4) as pool:
         async_solvers = map(pool.apply_async, [
             GreedySolver(strings).greedy,
             GreedySolver(strings).t_greedy,
-            HierarchicalSolver(strings).gha,
+            hg_gha.gha,
+            hg_ca.trivial_ca,
         ])
         solutions = list(map(lambda x: getattr(x, 'get')(), async_solvers))
 
@@ -231,7 +236,9 @@ def main():
     print_data(solutions[0], 'GREEDY', args.quiet)
     print_data(solutions[1], 'TGREEDY', args.quiet)
     print_data(solutions[2], 'GHA', args.quiet)
-    print('Is GREEDY == GHA?', 'Yes' if solutions[0] == solutions[2] else 'No')
+    print_data(solutions[3], 'CA + trivial', args.quiet)
+    print('Collapsing Conjecture holds?',
+          'Yes' if len(symmetric_difference(hg_ca.hg.graph, hg_gha.hg.graph).edges()) == 0 else 'No')
 
 
 if __name__ == '__main__':

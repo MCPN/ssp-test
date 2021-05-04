@@ -1,4 +1,15 @@
-from typing import List
+from typing import Dict, Iterable, List, Tuple
+
+
+def counting_sort(elements: Iterable[Tuple[int, int]], keys: Dict[Tuple[int, int], int]):
+    """
+    Counting sorts elements in reversed order by using keys as a reference
+    """
+    mx = max(keys.values())
+    order = [[] for _ in range(mx + 1)]
+    for elem in elements:
+        order[mx - keys[elem]].append(elem)
+    return [elem for lst in order for elem in lst]
 
 
 def ensure_substring_free(strings: List[str]) -> List[str]:

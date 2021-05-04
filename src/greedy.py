@@ -5,6 +5,7 @@ from typing import Dict, List, Iterable, Tuple
 import networkx as nx
 
 from .overlap import calculate_overlap
+from utils import counting_sort
 
 
 class GreedySolver:
@@ -52,7 +53,7 @@ class GreedySolver:
         graph = nx.DiGraph()
         graph.add_nodes_from(range(self._n + 2))  # all the strings plus a source and a sink
         edges = list(permutations(range(self._n), 2))
-        edges.sort(key=lambda x: self._overlaps[x], reverse=True)
+        edges = counting_sort(edges, self._overlaps)
         edges.extend([(self._n, i) for i in range(self._n)])  # self._n is a source
         edges.extend([(i, self._n + 1) for i in range(self._n)])  # (self._n + 1) is a sink
 
@@ -76,7 +77,7 @@ class GreedySolver:
         graph = nx.DiGraph()
         graph.add_nodes_from(range(self._n))
         edges = list(permutations(range(self._n), 2))
-        edges.sort(key=lambda x: self._overlaps[x], reverse=True)
+        edges = counting_sort(edges, self._overlaps)
 
         strings = []
         reachable = defaultdict(set)

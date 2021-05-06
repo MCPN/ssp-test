@@ -87,7 +87,7 @@ class GreedySolver:
             graph.add_edge(*edge)
 
             if edge[0] in reachable[edge[1]]:  # cycle
-                cycle_string = self._path_to_string(nx.find_cycle(graph, source=edge[0]))
+                cycle_string = self._path_to_string(nx.find_cycle(graph, source=edge[1]))
                 strings.append(cycle_string)
             else:
                 prefix = nx.ancestors(graph, edge[1])

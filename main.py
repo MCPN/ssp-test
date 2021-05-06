@@ -17,15 +17,20 @@ def create_dna_test(string: str, length: int, prob: float) -> List[str]:
     return ensure_substring_free(strings)
 
 
-def create_slice_test(string: str, repetitions: int, min_len: int, max_len: int) -> List[str]:
+def create_slice_test(string: str, repetitions: int, min_len: int, max_len: int, shift: bool = False) -> List[str]:
     strings = []
     n = len(string)
     for _ in range(repetitions):
+        if shift:
+            new_pos = random.randrange(len(string))
+            string = string[new_pos:] + string[:new_pos]
+
         pos = 0
         while n - pos > max_len:
             string_len = random.randint(min_len, max_len)
             strings.append(string[pos:pos + string_len])
             pos += string_len
+        strings.append(string[pos:])
 
     return ensure_substring_free(strings)
 
@@ -190,6 +195,11 @@ def main():
         type=int,
         help='Max size of a single string'
     )
+    slices_from_random.add_argument(
+        '--shift',
+        action='store_true',
+        help='Randomly shift every repetition'
+    )
 
     args = parser.parse_args()
     if args.test_type == 'input':
@@ -206,7 +216,8 @@ def main():
         strings = create_slice_test(args.input, args.repetitions, args.min_len, args.max_len)
     elif args.test_type == 'slice_random':
         strings = create_slice_test(
-            ''.join(random.choices(args.alphabet, k=args.input_len)), args.repetitions, args.min_len, args.max_len
+            ''.join(random.choices(args.alphabet, k=args.input_len)),
+            args.repetitions, args.min_len, args.max_len, args.shift
         )
     else:
         raise ValueError(f'Unknown command {args.test_type}')
